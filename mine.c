@@ -2,11 +2,10 @@
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
-#include <unistd.h>
 
-#define MINE 10
-#define ROW 20
-#define COL 20
+#define MINE 4
+#define ROW 10
+#define COL 10
 
 int value_in_array(int *array, int num);
 void create_map(char ***map);
@@ -19,6 +18,9 @@ void display_count_mine(char ***map, int count_mine, int r, int c);
 void find_mine_in_range(char ***map, int range[], int mine_cor[][2]);
 int find_mine(char ***map, int mine_cor[][2], int r, int c);
 void show_mine(char ***map, int mine_cor[][2]);
+void set_flag(char *** map, int r, int c);
+int check_win(char ***map);
+
 
 int main()
 {
@@ -48,14 +50,44 @@ int main()
     int check = 1;
     while (check)
     {
-        int a, b;
-        scanf("%d %d", &a, &b);
+        // 좌표 및 모드 입력 받기
+        char mode = 'k';
+        int a = ROW, b = COL;
+        printf("type Coordinate and Mode\nX_coordinate Y_coordinate f/m\nex)x y m/f\n");
+        scanf("%d %d %c", &a, &b, &mode);
         if (a < 0 || a > (ROW - 1) || b < 0 || b > (COL - 1))
             continue;
+        if (mode != 'F' && mode != 'f' && mode != 'M' && mode != 'm')
+            continue;
 
-        check = is_mine(map, mine_cor, a, b);
-        find_mine(map, mine_cor, a, b);
+        if (mode == 'F' || mode == 'f')
+        {
+            set_flag(map, a, b);
+        }
+        else if (mode == 'M' || mode == 'm')
+        {
+            // 해당 좌표가 지뢰인지 확인
+            check = is_mine(map, mine_cor, a, b);
+            if (check == 0)
+            {
+                show_mine(map, mine_cor);
+                printf("You LOSE..\n");
+                break;
+            }
+            // 지뢰가 아니라면 맵 열고, 출력
+            find_mine(map, mine_cor, a, b);
+        }
         print_map(map);
+
+        // 승리 유무 확인
+        int is_win = check_win(map);
+        if (is_win == MINE)
+        {
+            print_map(map);
+            printf("You WIN!!\n");
+            break;
+        }
+
     }
 
     free_map(map);
@@ -89,10 +121,10 @@ void create_map(char ***map)
 void print_map(char ***map)
 {
     system("clear");
-    printf("   ");
+    printf("xy ");
     for (int i = 0; i < 10; i++)
         printf("%d   ", i);
-    for (int i = 10; i < ROW; i++)
+    for (int i = 10; i < COL; i++)
         printf("%d  ", i);
     printf("\n");
     for (int i = 0; i < ROW; i++)
@@ -109,8 +141,22 @@ void print_map(char ***map)
         {
             printf("%s", map[i][j]);
         }
+        if (i < 10)
+        {
+            printf("%d ", i);
+        }
+        else if (i >= 10)
+        {
+            printf("%d", i);
+        }
         printf("\n");
     }
+    printf("   ");
+    for (int i = 0; i < 10; i++)
+        printf("%d   ", i);
+    for (int i = 10; i < COL; i++)
+        printf("%d  ", i);
+    printf("\n");
 }
 
 // 맵에 할당된 동적 메모리 해제
@@ -306,15 +352,22 @@ void find_mine_in_range(char ***map, int range[], int mine_cor[][2])
 void show_mine(char ***map, int mine_cor[][2])
 {
     system("clear");
-    printf("  ");
-    for (int i = 0; i < ROW; i++)
+    printf("xy ");
+    for (int i = 0; i < 10; i++)
         printf("%d   ", i);
-    for (int i = ROW; i < COL; i++)
+    for (int i = 10; i < COL; i++)
         printf("%d  ", i);
     printf("\n");
     for (int i = 0; i < ROW; i++)
     {
-        printf("%d", i);
+        if (i < 10)
+        {
+            printf("%d ", i);
+        }
+        else if (i >= 10)
+        {
+            printf("%d", i);
+        }
         for (int j = 0; j < COL; j++)
         {
             if (!is_mine(map, mine_cor, i, j))
@@ -326,6 +379,44 @@ void show_mine(char ***map, int mine_cor[][2])
                 printf("%s", map[i][j]);
             }
         }
+        if (i < 10)
+        {
+            printf("%d ", i);
+        }
+        else if (i >= 10)
+        {
+            printf("%d", i);
+        }
         printf("\n");
     }
+    printf("   ");
+    for (int i = 0; i < 10; i++)
+        printf("%d   ", i);
+    for (int i = 10; i < COL; i++)
+        printf("%d  ", i);
+    printf("\n");
+}
+
+void set_flag(char *** map, int r, int c)
+{
+    if (strcmp(map[r][c], " ░░ ") == 0)
+    {
+        map[r][c] = " ⚑⚐ ";
+    }
+}
+
+int check_win(char ***map)
+{
+    int unchecked = 0;
+    for (int i = 0; i < ROW; i++)
+    {
+        for (int j = 0; j < COL; j++)
+        {
+            if (strcmp(map[i][j], " ░░ ") == 0 || strcmp(map[i][j], " ⚑⚐ ") == 0)
+            {
+                unchecked++;
+            }
+        }
+    }
+    return unchecked;
 }
